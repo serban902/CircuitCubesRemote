@@ -12,18 +12,130 @@
     <script src="ble_nus.js"></script>
     <script src="ble_lwp.js"></script>
     <script>
+		// controller zone 
+		let haveEvents = 'ongamepadconnected' in window;
+		let controllers = {};
+		
+		let lastForwardValue = 0;
+		function driveForwardWithCooldown(intentSpeed) {
+			if (intentSpeed != lastForwardValue) {
+				lastForwardValue = intentSpeed;
+				drive(1, intentSpeed);
+			}
+		}
+		
+		let lastRearwardValue = 0;
+		function driveRearWardWithCooldown(intentSpeed) {
+			if (lastRearwardValue != intentSpeed) {
+				lastRearwardValue = intentSpeed;
+				drive(-1, intentSpeed);
+			}
+		}
+		
+		let lastRightValue = 0;
+		function steerRightWithCooldown(intentSpeed) {
+			if (lastRightValue != intentSpeed) {
+				lastRightValue = intentSpeed;
+				steer(-1, intentSpeed*255)// inverted values in circuit cubes API
+			}
+		}
+		
+		let lastLeftValue = 0;
+		function steerLeftWithCooldown(intentSpeed) {
+			if (lastLeftValue != intentSpeed) {
+				lastLeftValue = intentSpeed;
+				steer(1, -intentSpeed*255) // inverted values in circuit cubes API
+			}
+		}
+		
+		function connecthandler(e) {
+			addGamepad(e.gamepad);
+		}
+
+		function addGamepad(gamepad) {
+			controllers[gamepad.index] = gamepad;
+			requestAnimationFrame(updateStatus);
+		}
+
+		function updateStatus() {
+			scanGamepads();
+
+			for (let j in controllers) {
+				const gp = controllers[j];
+
+				// A button (index 0)
+				// if (gp.buttons[0].pressed) {
+					//doActionWithCooldown();
+				//}
+				
+				// right trigger values (forward motion)
+				const rtValue = gp.buttons[7].value;
+				// Right Trigger (usually axis 5 or 6, values from -1 to 1 or 0 to 1)
+				driveForwardWithCooldown(rtValue*255);
+				
+				// left trigger value (backward motion)
+				const ltValue = gp.buttons[6].value;
+				driveRearWardWithCooldown(ltValue*255);		
+
+				// left joystick values (steering)
+				const leftStickX = gp.axes[0]; // -1 (left) to 1 (right)
+				const leftStickY = gp.axes[1]; // -1 (up) to 1 (down)
+				if (leftStickX > 0) {
+					// right turn
+					steerRightWithCooldown(leftStickX)
+				} else if (leftStickX < 0) {
+					// left turn
+					steerLeftWithCooldown(leftStickX)
+				}
+			}
+
+			requestAnimationFrame(updateStatus);
+		}
+
+		function scanGamepads() {
+			const gamepads = navigator.getGamepads ? navigator.getGamepads() : [];
+			for (let i = 0; i < gamepads.length; i++) {
+				if (gamepads[i]) {
+					if (!(gamepads[i].index in controllers)) {
+						addGamepad(gamepads[i]);
+					} else {
+						controllers[gamepads[i].index] = gamepads[i];
+					}
+				}
+			}
+		}
+
+		window.addEventListener("gamepadconnected", connecthandler);
+		window.addEventListener("gamepaddisconnected", (e) => {
+			delete controllers[e.gamepad.index];
+		});
+
+		// fallback polling if events aren't supported
+		if (!haveEvents) {
+			setInterval(scanGamepads, 500);
+		}
+		
         var pressTime = 0;
         var lastDirection = 0;
         var touchScreen = false;
 
-        async function run_motor(direction, motor) {
-            const speed = getValue(motor + "_speed");
+        async function run_motor(direction, motor, attemptSpeed = 255) {
+            // speed section
+			const maximumSpeed = getValue(motor + "_speed");
+			calculatedSpeed = 0;
+			if (attemptSpeed <= maximumSpeed) {
+				calculatedSpeed = attemptSpeed;
+			} else {
+				calculatedSpeed = maximumSpeed;
+			}
+			
             const channel = getChannel(motor + "_channel");
             const invert = getInversion(motor + "_invert");
-            await sendMotorCmd(speed*direction*invert, channel);
+			console.log("driving at speed " + (calculatedSpeed*direction*invert));
+            await sendMotorCmd(calculatedSpeed*direction*invert, channel);
         }
 
-        async function steer(direction, touch=true) {
+        async function steer(direction, intentSpeed=255, touch=true) {
             if (alreadyTouched(touch)) return;
             if (direction == 0) {
                 const centering = document.getElementById("centering").checked;
@@ -42,14 +154,14 @@
                 }
             } else {
                 lastDirection = direction;
-                run_motor(direction, "steer");
+                run_motor(direction, "steer", intentSpeed);
                 pressTime = performance.now();
             }
         }
 
-        function drive(direction, touch=true) {
+        function drive(direction, intentSpeed=255, touch=true) {
             if (alreadyTouched(touch)) return;
-            run_motor(direction, "drive");
+            run_motor(direction, "drive", intentSpeed);
         }
 
         async function sendMotorCmd(speed, channel){
@@ -86,7 +198,7 @@
 <body onload="onLoad()">
     <div class="app">
         <div class="title-container">
-            <span id="cc">CIRCUIT</span><span id="cb">CUBES</span><span id="wr">REMOTE</span>
+            <span id="cc">CIRCUIT</span><span id="cb">CUBES</span><span id="wr">REMOTE with XBOX support</span>
         </div>
         <div class="controls">
             <div class="control-btns">
@@ -160,7 +272,7 @@
             <textarea id="terminal" rows="10" cols="50" readonly></textarea>
         </div>
         <div class="about">
-            v0.2.3 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About</a>
+            v0.2.3 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About: This is a fork of repkovsky/CircuitCubesRemote</a>
         </div>
     </div>
     <video loop id="sleep_lock" style="width:1px;">
