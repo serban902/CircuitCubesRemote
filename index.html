@@ -32,19 +32,15 @@
 			}
 		}
 		
-		let lastRightValue = 0;
-		function steerRightWithCooldown(intentSpeed) {
-			if (lastRightValue != intentSpeed) {
-				lastRightValue = intentSpeed;
-				steer(-1, intentSpeed*255)// inverted values in circuit cubes API
-			}
-		}
-		
-		let lastLeftValue = 0;
-		function steerLeftWithCooldown(intentSpeed) {
-			if (lastLeftValue != intentSpeed) {
-				lastLeftValue = intentSpeed;
-				steer(1, -intentSpeed*255) // inverted values in circuit cubes API
+		let lastSteerValue = 0;
+		function steerWithCooldown(intentSpeed, isLeft) {
+			if (lastSteerValue != intentSpeed) {
+				lastSteerValue = intentSpeed;
+				if (isLeft) {
+					steer(1, -intentSpeed*255)// inverted values in circuit cubes API
+				} else {
+					steer(-1, intentSpeed*255)// inverted values in circuit cubes API
+				}
 			}
 		}
 		
@@ -79,13 +75,12 @@
 
 				// left joystick values (steering)
 				const leftStickX = gp.axes[0]; // -1 (left) to 1 (right)
-				const leftStickY = gp.axes[1]; // -1 (up) to 1 (down)
 				if (leftStickX > 0) {
 					// right turn
-					steerRightWithCooldown(leftStickX)
+					steerWithCooldown(leftStickX, false)
 				} else if (leftStickX < 0) {
 					// left turn
-					steerLeftWithCooldown(leftStickX)
+					steerWithCooldown(leftStickX, true)
 				}
 			}
 
@@ -128,10 +123,9 @@
 			} else {
 				calculatedSpeed = maximumSpeed;
 			}
-			
             const channel = getChannel(motor + "_channel");
             const invert = getInversion(motor + "_invert");
-			console.log("driving at speed " + (calculatedSpeed*direction*invert));
+			
             await sendMotorCmd(calculatedSpeed*direction*invert, channel);
         }
 
@@ -170,6 +164,7 @@
             while (bleBusy == true) {
                 await delay(1);
             }
+			console.log("driving at speed " + cmd);
             nusSendString(cmd, true);
         }
 
@@ -272,7 +267,7 @@
             <textarea id="terminal" rows="10" cols="50" readonly></textarea>
         </div>
         <div class="about">
-            v0.2.3 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About: This is a fork of repkovsky/CircuitCubesRemote</a>
+            v0.3.1 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About: This is a fork of repkovsky/CircuitCubesRemote</a>
         </div>
     </div>
     <video loop id="sleep_lock" style="width:1px;">
