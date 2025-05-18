@@ -75,12 +75,14 @@
 
 				// left joystick values (steering)
 				const leftStickX = gp.axes[0]; // -1 (left) to 1 (right)
-				if (leftStickX > 0) {
+				if (leftStickX > 0.1) {
 					// right turn
 					steerWithCooldown(leftStickX, false)
-				} else if (leftStickX < 0) {
+				} else if (leftStickX < -0.1) {
 					// left turn
 					steerWithCooldown(leftStickX, true)
+				} else {
+					steerWithCooldown(0, false)
 				}
 			}
 
@@ -125,7 +127,8 @@
 			}
             const channel = getChannel(motor + "_channel");
             const invert = getInversion(motor + "_invert");
-			
+			console.log("driving motor at " + (calculatedSpeed*direction*invert));
+
             await sendMotorCmd(calculatedSpeed*direction*invert, channel);
         }
 
@@ -164,7 +167,6 @@
             while (bleBusy == true) {
                 await delay(1);
             }
-			console.log("driving at speed " + cmd);
             nusSendString(cmd, true);
         }
 
@@ -267,7 +269,7 @@
             <textarea id="terminal" rows="10" cols="50" readonly></textarea>
         </div>
         <div class="about">
-            v0.3.1 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About: This is a fork of repkovsky/CircuitCubesRemote</a>
+            v0.3.2 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About: This is a fork of repkovsky/CircuitCubesRemote</a>
         </div>
     </div>
     <video loop id="sleep_lock" style="width:1px;">
