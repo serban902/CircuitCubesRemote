@@ -20,7 +20,8 @@
 		function driveForwardWithCooldown(intentSpeed) {
 			if (intentSpeed != lastForwardValue) {
 				lastForwardValue = intentSpeed;
-				drive(1, intentSpeed);
+				console.log("intent speed at " + intentSpeed);
+				drive(1, Math.round(intentSpeed));
 			}
 		}
 		
@@ -28,6 +29,8 @@
 		function driveRearWardWithCooldown(intentSpeed) {
 			if (lastRearwardValue != intentSpeed) {
 				lastRearwardValue = intentSpeed;
+				console.log("intent speed at " + intentSpeed);
+
 				drive(-1, Math.round(intentSpeed));
 			}
 		}
@@ -167,6 +170,8 @@
             while (bleBusy == true) {
                 await delay(1);
             }
+			
+			console.log("sending command " + cmd);
 
             nusSendString(cmd, true);
         }
@@ -270,7 +275,7 @@
             <textarea id="terminal" rows="10" cols="50" readonly></textarea>
         </div>
         <div class="about">
-            v0.3.3 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About: This is a fork of repkovsky/CircuitCubesRemote</a>
+            v0.3.4 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About: This is a fork of repkovsky/CircuitCubesRemote</a>
         </div>
     </div>
     <video loop id="sleep_lock" style="width:1px;">
