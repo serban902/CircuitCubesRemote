@@ -28,7 +28,7 @@
 		function driveRearWardWithCooldown(intentSpeed) {
 			if (lastRearwardValue != intentSpeed) {
 				lastRearwardValue = intentSpeed;
-				drive(-1, intentSpeed);
+				drive(-1, Math.round(intentSpeed));
 			}
 		}
 		
@@ -37,9 +37,9 @@
 			if (lastSteerValue != intentSpeed) {
 				lastSteerValue = intentSpeed;
 				if (isLeft) {
-					steer(1, -intentSpeed*255)// inverted values in circuit cubes API
+					steer(1, Math.round(-intentSpeed*255))// inverted values in circuit cubes API
 				} else {
-					steer(-1, intentSpeed*255)// inverted values in circuit cubes API
+					steer(-1, Math.round(intentSpeed*255))// inverted values in circuit cubes API
 				}
 			}
 		}
@@ -167,6 +167,7 @@
             while (bleBusy == true) {
                 await delay(1);
             }
+
             nusSendString(cmd, true);
         }
 
@@ -269,7 +270,7 @@
             <textarea id="terminal" rows="10" cols="50" readonly></textarea>
         </div>
         <div class="about">
-            v0.3.2 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About: This is a fork of repkovsky/CircuitCubesRemote</a>
+            v0.3.3 | <a href="https://github.com/repkovsky/CircuitCubesRemote">About: This is a fork of repkovsky/CircuitCubesRemote</a>
         </div>
     </div>
     <video loop id="sleep_lock" style="width:1px;">
